@@ -20,6 +20,7 @@ class Game {
         this.victoryScreen = new VictoryScreen();
 
         this.gameState = 'TITLE'; // TITLE, PLAYING, VICTORY, GAME_OVER
+        this.gameOverTimer = 0;
 
         this.setupUIControls();
         this.init();
@@ -59,15 +60,14 @@ class Game {
             });
         }
 
-        // Allow clicking canvas screen to focus and start game
+        // Allow clicking canvas screen to focus and start/reset game
         this.canvas.addEventListener('click', () => {
             window.focus();
             audio.init();
             if (this.gameState === 'TITLE') {
                 this.startNewGame();
             } else if (this.gameState === 'VICTORY' || this.gameState === 'GAME_OVER') {
-                this.gameState = 'TITLE';
-                audio.startMusic('title');
+                this.returnToTitleScreen();
             }
         });
     }
@@ -77,10 +77,18 @@ class Game {
         this.loop();
     }
 
+    returnToTitleScreen() {
+        this.gameState = 'TITLE';
+        this.player = new Player(40, 0, 175);
+        this.stageManager = new StageManager();
+        audio.startMusic('title');
+    }
+
     startNewGame() {
         this.player = new Player(40, 0, 175);
         this.stageManager.loadStage(1, this.player);
         this.gameState = 'PLAYING';
+        this.gameOverTimer = 0;
     }
 
     nextStage() {
@@ -90,6 +98,26 @@ class Game {
         } else {
             this.gameState = 'VICTORY';
             audio.startMusic('victory');
+        }
+    }
+
+    handlePlayerDeath() {
+        this.player.lives--;
+        audio.playKnockdown();
+
+        if (this.player.lives <= 0) {
+            this.gameState = 'GAME_OVER';
+            this.gameOverTimer = 180; // 3 second auto-return to Title screen
+        } else {
+            // Respawn player
+            this.player.hp = this.player.maxHp;
+            this.player.isDead = false;
+            this.player.state = 'IDLE';
+            this.player.x = this.stageManager.cameraX + 40;
+            this.player.z = 175;
+            this.player.y = 0;
+            this.player.isInvincible = true;
+            this.player.invincibleTimer = 90; // Temporary spawn invincibility
         }
     }
 
@@ -127,31 +155,23 @@ class Game {
                 });
             }
 
-            // Check Player Death / Respawn
-            if (this.player.isDead) {
-                this.player.lives--;
-                if (this.player.lives <= 0) {
-                    this.gameState = 'GAME_OVER';
-                } else {
-                    // Respawn player
-                    this.player.hp = this.player.maxHp;
-                    this.player.isDead = false;
-                    this.player.state = 'IDLE';
-                    this.player.x = this.stageManager.cameraX + 40;
-                    this.player.z = 175;
-                    this.player.isInvincible = true;
-                    this.player.invincibleTimer = 60;
-                }
+            // Handle Player Death ONCE when hp hit 0
+            if (this.player.isDead && this.player.hp <= 0) {
+                this.handlePlayerDeath();
             }
 
             // Check Stage Clear
             if (this.stageManager.stageCleared) {
                 this.nextStage();
             }
-        } else if (this.gameState === 'VICTORY' || this.gameState === 'GAME_OVER') {
+        } else if (this.gameState === 'GAME_OVER') {
+            this.gameOverTimer--;
+            if (this.gameOverTimer <= 0 || input.isStartPressed()) {
+                this.returnToTitleScreen();
+            }
+        } else if (this.gameState === 'VICTORY') {
             if (input.isStartPressed()) {
-                this.gameState = 'TITLE';
-                audio.startMusic('title');
+                this.returnToTitleScreen();
             }
         }
     }
@@ -181,15 +201,16 @@ class Game {
         } else if (this.gameState === 'VICTORY') {
             this.victoryScreen.draw(this.renderer.ctx, this.player, this.renderer.width, this.renderer.height);
         } else if (this.gameState === 'GAME_OVER') {
-            this.renderer.drawText('GAME OVER', this.renderer.width / 2, 110, '#e74c3c', 'center', 14);
-            this.renderer.drawText('PRESS ENTER TO RESTART', this.renderer.width / 2, 140, '#ffffff', 'center', 8);
+            this.renderer.drawText('GAME OVER', this.renderer.width / 2, 100, '#e74c3c', 'center', 14);
+            this.renderer.drawText('RETURNING TO TITLE...', this.renderer.width / 2, 130, '#ffffff', 'center', 7);
+            this.renderer.drawText('PRESS ENTER / CLICK', this.renderer.width / 2, 150, '#f1c40f', 'center', 7);
         }
     }
 
     loop = () => {
         this.update();
         this.render();
-        input.clearJustPressed(); // Clear single-frame input buffer after frame processing
+        input.clearJustPressed();
         requestAnimationFrame(this.loop);
     };
 }
