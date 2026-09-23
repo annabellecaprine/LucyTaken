@@ -86,11 +86,15 @@ export class BossAmanda extends Entity {
         };
 
         if (player && Collision.check3DBox(this.activeHitbox, Collision.getHurtbox(player))) {
-            player.takeDamage(18, this.facingRight ? 6 : -6, 0);
-            audio.playHit();
-            if (renderer) {
-                renderer.triggerShake(5, 8);
-                renderer.addHitSpark(player.x, player.z - player.y - 20, 'SLASH!');
+            const hitSuccess = player.takeDamage(18, this.facingRight ? 6 : -6, 0);
+            if (hitSuccess) {
+                audio.playHit();
+                window.comboCount = 0;
+                if (renderer) {
+                    renderer.triggerShake(5, 8);
+                    renderer.addHitSpark(player.x, player.z - player.y - 20, 'SLASH!', '#e74c3c');
+                    renderer.addHitSpark(player.x - 10, player.z - player.y - 30, '-18', '#e74c3c');
+                }
             }
         }
     }
@@ -109,9 +113,15 @@ export class BossAmanda extends Entity {
         };
 
         if (player && Collision.check3DBox(this.activeHitbox, Collision.getHurtbox(player))) {
-            player.takeDamage(14, this.facingRight ? 4 : -4, 0);
-            audio.playHit();
-            if (renderer) renderer.addHitSpark(player.x, player.z - player.y - 20, 'WHACK!');
+            const hitSuccess = player.takeDamage(14, this.facingRight ? 4 : -4, 0);
+            if (hitSuccess) {
+                audio.playHit();
+                window.comboCount = 0;
+                if (renderer) {
+                    renderer.addHitSpark(player.x, player.z - player.y - 20, 'WHACK!', '#e74c3c');
+                    renderer.addHitSpark(player.x - 10, player.z - player.y - 30, '-14', '#e74c3c');
+                }
+            }
         }
     }
 
@@ -143,6 +153,11 @@ export class BossAmanda extends Entity {
         ctx.translate(this.x, this.z - this.y);
 
         if (!this.facingRight) ctx.scale(-1, 1);
+
+        if (this.state === 'KNOCKDOWN' || this.state === 'DEAD') {
+            ctx.rotate(-Math.PI / 2); // Flop onto back
+            ctx.translate(-24, 8);
+        }
 
         if (this.isInvincible && Math.floor(Date.now() / 30) % 2 === 0) {
             ctx.globalAlpha = 0.5;

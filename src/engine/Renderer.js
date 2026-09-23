@@ -42,12 +42,12 @@ export class Renderer {
         this.shakeDuration = duration;
     }
 
-    addHitSpark(x, y, text = 'POW!') {
+    addHitSpark(x, y, text = 'POW!', color = null) {
         this.hitSparks.push({
-            x, y, text,
-            life: 12,
-            maxLife: 12,
-            vy: -0.5
+            x, y, text, color,
+            life: 14,
+            maxLife: 14,
+            vy: -0.6
         });
     }
 
@@ -62,7 +62,18 @@ export class Renderer {
             spark.life--;
             spark.y += spark.vy;
 
-            this.ctx.fillStyle = spark.life % 2 === 0 ? '#ffffff' : '#f1c40f';
+            // Damage numbers can provide their own hex color
+            if (spark.color) {
+                this.ctx.fillStyle = spark.color;
+            } else {
+                this.ctx.fillStyle = spark.life % 2 === 0 ? '#ffffff' : '#f1c40f';
+            }
+
+            // outline
+            this.ctx.fillStyle = '#000000';
+            this.ctx.fillText(spark.text, Math.floor(spark.x) + 1, Math.floor(spark.y) + 1);
+
+            this.ctx.fillStyle = spark.color || (spark.life % 2 === 0 ? '#ffffff' : '#f1c40f');
             this.ctx.fillText(spark.text, Math.floor(spark.x), Math.floor(spark.y));
 
             if (spark.life <= 0) {

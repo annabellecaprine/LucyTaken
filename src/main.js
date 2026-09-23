@@ -19,8 +19,9 @@ class Game {
         this.titleScreen = new TitleScreen();
         this.victoryScreen = new VictoryScreen();
 
-        this.gameState = 'TITLE'; // TITLE, PLAYING, VICTORY, GAME_OVER
+        this.gameState = 'TITLE'; // TITLE, PLAYING, STAGE_CLEAR, STAGE_TRANSITION, VICTORY, GAME_OVER
         this.gameOverTimer = 0;
+        this.transitionTimer = 0;
 
         this.setupUIControls();
         this.init();
@@ -94,7 +95,8 @@ class Game {
     nextStage() {
         const nextStageId = this.stageManager.stageId + 1;
         if (nextStageId <= 3) {
-            this.stageManager.loadStage(nextStageId, this.player);
+            this.gameState = 'STAGE_TRANSITION';
+            this.transitionTimer = 90;
         } else {
             this.gameState = 'VICTORY';
             audio.startMusic('victory');
@@ -162,7 +164,23 @@ class Game {
 
             // Check Stage Clear
             if (this.stageManager.stageCleared) {
+                this.gameState = 'STAGE_CLEAR';
+                this.transitionTimer = 180;
+                this.player.score += 1500; // Flat time bonus
+                this.player.state = 'IDLE';
+                audio.playPickup();
+            }
+        } else if (this.gameState === 'STAGE_CLEAR') {
+            this.transitionTimer--;
+            if (this.transitionTimer <= 0) {
                 this.nextStage();
+            }
+        } else if (this.gameState === 'STAGE_TRANSITION') {
+            this.transitionTimer--;
+            if (this.transitionTimer <= 0) {
+                const nextId = this.stageManager.stageId + 1;
+                this.stageManager.loadStage(nextId, this.player);
+                this.gameState = 'PLAYING';
             }
         } else if (this.gameState === 'GAME_OVER') {
             this.gameOverTimer--;
@@ -176,28 +194,44 @@ class Game {
         }
     }
 
+    drawPlayfield() {
+        // 1. Draw Parallax Background
+        this.renderer.applyCameraTransform(this.stageManager.cameraX);
+        Backgrounds.drawStage(this.renderer.ctx, this.stageManager.stageId, this.stageManager.cameraX);
+        this.renderer.restoreTransform();
+
+        // 2. Draw Y-Sorted 2.5D Entities (Player, Enemies, Boss, Items)
+        const allEntities = this.stageManager.getAllEntities(this.player);
+        this.renderer.renderEntities(allEntities, this.stageManager.cameraX);
+
+        // 3. Draw Stage Arrow / Item Overlays
+        this.renderer.applyCameraTransform(this.stageManager.cameraX);
+        this.stageManager.drawOverlayUI(this.renderer.ctx);
+        this.renderer.restoreTransform();
+
+        // 4. Draw Screen-space HUD
+        HUD.draw(this.renderer.ctx, this.player, this.stageManager, this.renderer.width);
+    }
+
     render() {
         this.renderer.clear();
 
         if (this.gameState === 'TITLE') {
             this.titleScreen.draw(this.renderer.ctx, this.renderer.width, this.renderer.height);
         } else if (this.gameState === 'PLAYING') {
-            // 1. Draw Parallax Background
-            this.renderer.applyCameraTransform(this.stageManager.cameraX);
-            Backgrounds.drawStage(this.renderer.ctx, this.stageManager.stageId, this.stageManager.cameraX);
-            this.renderer.restoreTransform();
-
-            // 2. Draw Y-Sorted 2.5D Entities (Player, Enemies, Boss, Items)
-            const allEntities = this.stageManager.getAllEntities(this.player);
-            this.renderer.renderEntities(allEntities, this.stageManager.cameraX);
-
-            // 3. Draw Stage Arrow / Item Overlays
-            this.renderer.applyCameraTransform(this.stageManager.cameraX);
-            this.stageManager.drawOverlayUI(this.renderer.ctx);
-            this.renderer.restoreTransform();
-
-            // 4. Draw Screen-space HUD
-            HUD.draw(this.renderer.ctx, this.player, this.stageManager, this.renderer.width);
+            this.drawPlayfield();
+        } else if (this.gameState === 'STAGE_CLEAR') {
+            this.drawPlayfield();
+            this.renderer.clear('rgba(0,0,0,0.6)');
+            this.renderer.drawText(`STAGE ${this.stageManager.stageId} CLEAR!`, this.renderer.width / 2, 100, '#66fcf1', 'center', 10);
+            this.renderer.drawText(`BONUS: +1500`, this.renderer.width / 2, 130, '#f1c40f', 'center', 8);
+        } else if (this.gameState === 'STAGE_TRANSITION') {
+            const alpha = Math.min(1, (90 - this.transitionTimer) / 30);
+            this.drawPlayfield();
+            this.renderer.clear(`rgba(0,0,0,${alpha})`);
+            if (this.transitionTimer < 45) {
+                this.renderer.drawText(`STAGE ${this.stageManager.stageId + 1} START`, this.renderer.width / 2, 120, '#ffffff', 'center', 10);
+            }
         } else if (this.gameState === 'VICTORY') {
             this.victoryScreen.draw(this.renderer.ctx, this.player, this.renderer.width, this.renderer.height);
         } else if (this.gameState === 'GAME_OVER') {

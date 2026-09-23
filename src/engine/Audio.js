@@ -270,9 +270,31 @@ class AudioEngine {
                 osc.stop(now + 0.15);
             }
 
-            // Drum noise beat on 4th & 12th step
-            if (step % 4 === 2) {
-                this.playNoise(0.05, 0.08);
+            // 4-on-the-floor kick pattern
+            if (step % 2 === 0) {
+                this.playKick(this.tempo === 160 ? 1 : 2);
+            } else {
+                // Offbeat hi-hat
+                const noise = this.ctx.createBufferSource();
+                const buffer = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.05, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+                noise.buffer = buffer;
+
+                // Bandpass filter for hi-hat sound
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.value = 5000;
+
+                const noiseEnv = this.ctx.createGain();
+                noiseEnv.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                noiseEnv.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
+
+                noise.connect(filter);
+                filter.connect(noiseEnv);
+                noiseEnv.connect(this.masterGain);
+
+                noise.start();
             }
 
             this.stepCount++;

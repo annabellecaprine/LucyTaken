@@ -156,10 +156,17 @@ export class Player extends Entity {
                         this.activeHitbox.knockbackZ
                     );
                     if (hitSuccess) {
-                        this.score += 100;
+                        // Increase combo!
+                        this.comboStep = this.comboStep; // Used for punch string internally
+                        window.comboCount = (window.comboCount || 0) + 1;
+                        window.comboTimer = 120; // 2 seconds to land another hit
+
+                        this.score += 100 * Math.min(4, Math.max(1, Math.floor(window.comboCount / 3)));
                         if (renderer) {
                             const text = this.activeHitbox.isSpecial ? 'TAIL SWIPE!' : (this.comboStep === 3 ? 'K.O.!' : 'WHAM!');
                             renderer.addHitSpark(enemy.x, enemy.z - enemy.y - 20, text);
+                            // Damage Number
+                            renderer.addHitSpark(enemy.x + 10, enemy.z - enemy.y - 30, `-${this.activeHitbox.damage}`, '#f1c40f');
                         }
                     }
                 }
@@ -199,6 +206,11 @@ export class Player extends Entity {
 
         if (!this.facingRight) {
             ctx.scale(-1, 1);
+        }
+
+        if (this.state === 'KNOCKDOWN' || this.state === 'DEAD') {
+            ctx.rotate(-Math.PI / 2); // Flop onto back
+            ctx.translate(-24, 8); // Adjust position after rotation
         }
 
         if (this.isInvincible && Math.floor(Date.now() / 40) % 2 === 0) {

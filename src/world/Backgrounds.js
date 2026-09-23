@@ -45,10 +45,14 @@ export class Backgrounds {
 
         // Neon signs & Posters on building
         ctx.font = '8px "Press Start 2P", monospace';
-        ctx.fillStyle = '#e74c3c';
+        const t = Math.floor(Date.now() / 150); // fast flicker timer
+
+        ctx.fillStyle = (t % 15 < 2) ? '#330000' : '#e74c3c'; // Flickers off randomly
         ctx.fillText('CAT BAR', wallX + 60, 100);
-        ctx.fillStyle = '#f1c40f';
+
+        ctx.fillStyle = (t % 20 > 18) ? '#444400' : '#f1c40f';
         ctx.fillText('NIGHT CITY', wallX + 280, 105);
+
         ctx.fillStyle = '#2ecc71';
         ctx.fillText('SYNDICATE', wallX + 480, 95);
     }

@@ -24,16 +24,41 @@ export class HUD {
         ctx.strokeStyle = '#ffffff';
         ctx.strokeRect(7, 12, 62, 8);
 
-        // 2. Lives & Score
+        // 2. Combo Counter
+        if (window.comboCount > 1 && window.comboTimer > 0) {
+            window.comboTimer--;
+            ctx.font = '8px "Press Start 2P", monospace';
+            ctx.fillStyle = '#f1c40f';
+            const mult = Math.min(4, Math.max(1, Math.floor(window.comboCount / 3)));
+            ctx.fillText(`COMBO ${window.comboCount}!`, 108, 10);
+            if (mult > 1) {
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillText(`x${mult} SCORE`, 108, 20);
+            }
+        }
+
+        // 3. Lives & Score
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(`LIVES:${player.lives}`, 80, 16);
-        ctx.fillText(`SCORE:${player.score.toString().padStart(6, '0')}`, 145, 16);
+        ctx.font = '6px "Press Start 2P", monospace';
+        // Draw life icons as little orange circles with ears
+        for (let i = 0; i < player.lives; i++) {
+            ctx.fillStyle = '#d35400';
+            ctx.fillRect(80 + (i * 12), 11, 8, 8);
+            ctx.fillRect(79 + (i * 12), 9, 3, 3);
+            ctx.fillRect(86 + (i * 12), 9, 3, 3);
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillRect(82 + (i * 12), 14, 2, 2);
+            ctx.fillRect(85 + (i * 12), 14, 2, 2);
+        }
 
-        // 3. Stage Indicator
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(`SCORE:${player.score.toString().padStart(6, '0')}`, 135, 16);
+
+        // 4. Stage Indicator
         ctx.fillStyle = '#66fcf1';
-        ctx.fillText(`STAGE ${stageManager.stageId}`, 215, 16);
+        ctx.fillText(`STAGE ${stageManager.stageId}`, 205, 16);
 
-        // 4. Boss HP Bar (if Amanda Boss is present)
+        // 5. Boss HP Bar (if Amanda Boss is present)
         if (stageManager.boss && !stageManager.boss.isDead) {
             const boss = stageManager.boss;
             const bHpPercent = Math.max(0, boss.hp / boss.maxHp);

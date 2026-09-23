@@ -92,9 +92,15 @@ export class Enemy extends Entity {
         };
 
         if (player && Collision.check3DBox(this.activeHitbox, Collision.getHurtbox(player))) {
-            player.takeDamage(10, this.facingRight ? 4 : -4, 0);
-            audio.playHit();
-            if (renderer) renderer.addHitSpark(player.x, player.z - player.y - 20, 'OUCH!');
+            const hitSuccess = player.takeDamage(10, this.facingRight ? 4 : -4, 0);
+            if (hitSuccess) {
+                audio.playHit();
+                window.comboCount = 0; // Reset player combo
+                if (renderer) {
+                    renderer.addHitSpark(player.x, player.z - player.y - 20, 'OUCH!', '#e74c3c');
+                    renderer.addHitSpark(player.x - 10, player.z - player.y - 30, '-10', '#e74c3c');
+                }
+            }
         }
     }
 
@@ -127,6 +133,11 @@ export class Enemy extends Entity {
 
         if (!this.facingRight) ctx.scale(-1, 1);
 
+        if (this.state === 'KNOCKDOWN' || this.state === 'DEAD') {
+            ctx.rotate(-Math.PI / 2); // Flop onto back
+            ctx.translate(-24, 8);
+        }
+
         if (this.isInvincible && Math.floor(Date.now() / 40) % 2 === 0) {
             ctx.globalAlpha = 0.5;
         }
@@ -136,6 +147,18 @@ export class Enemy extends Entity {
             this.spriteFrame * 32, 0, 32, 32,
             -16, -32, 32, 32
         );
+        // Floating HP Bar
+        if (this.hp < this.maxHp) {
+            const hpPercent = Math.max(0, this.hp / this.maxHp);
+            ctx.fillStyle = '#111111';
+            ctx.fillRect(-8, -38, 16, 2);
+            ctx.fillStyle = hpPercent > 0.5 ? '#2ecc71' : '#e74c3c';
+            ctx.fillRect(-8, -38, Math.floor(16 * hpPercent), 2);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-9, -39, 18, 4);
+        }
+
         ctx.restore();
     }
 }

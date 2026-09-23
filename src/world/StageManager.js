@@ -107,13 +107,25 @@ export class StageManager {
                 this.cameraLockX = this.cameraX;
 
                 if (wave.isBossWave) {
-                    this.boss = new BossAmanda(this.cameraX + 200, 0, 175);
+                    this.isBossIntro = true;
+                    this.bossIntroTimer = 180; // 3 second warning before spawn
+                    this.boss = null;
                     audio.playBossAlert();
                 } else {
                     for (const eData of wave.enemies) {
                         this.enemies.push(new Enemy(eData.x, 0, eData.z, eData.type));
                     }
                 }
+            }
+        }
+
+        if (this.isBossIntro) {
+            this.bossIntroTimer--;
+            if (this.bossIntroTimer <= 0) {
+                this.isBossIntro = false;
+                this.boss = new BossAmanda(this.cameraX + 220, 0, 175);
+                this.boss.state = 'WALK';
+                this.boss.vx = -1.5;
             }
         }
 
@@ -179,7 +191,21 @@ export class StageManager {
             ctx.font = '10px "Press Start 2P", monospace';
             ctx.fillStyle = '#f1c40f';
             ctx.textAlign = 'right';
-            ctx.fillText('GO ▶▶', 240, 50);
+            ctx.fillText('GO ▶▶', this.cameraX + 240, 50);
+            ctx.restore();
+        }
+
+        // Draw Flashing WARNING for Boss
+        if (this.isBossIntro && Math.floor(Date.now() / 150) % 2 === 0) {
+            ctx.save();
+            ctx.font = '12px "Press Start 2P", monospace';
+            ctx.fillStyle = '#e74c3c';
+            ctx.textAlign = 'center';
+            ctx.fillText('WARNING!!', this.cameraX + 128, 80);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '8px "Press Start 2P", monospace';
+            ctx.fillText('SYNDICATE BOSS APPROACHES', this.cameraX + 128, 100);
             ctx.restore();
         }
     }

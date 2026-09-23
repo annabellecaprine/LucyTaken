@@ -40,12 +40,31 @@ export class Entity {
             this.vy -= this.gravity;
         } else {
             this.y = 0;
-            this.vy = 0;
+            // Bounce on ground if knocked down
+            if (this.state === 'KNOCKDOWN' && this.vy < -1) {
+                this.vy = -this.vy * 0.4; // Bounce
+                this.vx *= 0.6;
+            } else {
+                this.vy = 0;
+            }
         }
 
-        // Friction
-        this.vx *= 0.82;
-        this.vz *= 0.82;
+        // Friction (only apply if on ground and not wildly bouncing)
+        if (this.isOnGround() && this.state !== 'KNOCKDOWN') {
+            this.vx *= 0.82;
+            this.vz *= 0.82;
+        } else if (this.state === 'KNOCKDOWN' && this.isOnGround() && Math.abs(this.vy) < 1) {
+            this.vx *= 0.6;
+            this.vz *= 0.6;
+        }
+
+        // Death removal delay after lying on the ground for 60 frames
+        if (this.state === 'KNOCKDOWN' && this.hp <= 0 && this.isOnGround() && Math.abs(this.vy) < 1) {
+            if (this.stateTimer > 60) {
+                this.isDead = true;
+                this.state = 'DEAD';
+            }
+        }
 
         if (this.invincibleTimer > 0) {
             this.invincibleTimer--;
@@ -56,21 +75,26 @@ export class Entity {
     }
 
     takeDamage(amount, knockbackX = 0, knockbackZ = 0) {
-        if (this.isInvincible || this.isDead) return false;
+        if (this.isInvincible || this.isDead || this.state === 'DEAD') return false;
 
         this.hp = Math.max(0, this.hp - amount);
         this.isInvincible = true;
         this.invincibleTimer = 16;
 
+        // Slightly launch into air on heavy hit or death
+        const isKnockdown = this.hp <= 0 || Math.abs(knockbackX) > 5;
         this.vx = knockbackX;
         this.vz = knockbackZ;
         this.stateTimer = 0;
 
-        if (this.hp <= 0) {
-            this.state = 'DEAD';
-            this.isDead = true;
+        if (isKnockdown) {
+            this.state = 'KNOCKDOWN';
+            this.vy = 4.0; // Launch up
+            this.invincibleTimer = 60; // Invincible while knocked down
         } else {
             this.state = 'HURT';
+            // Stash hit-stun recoiling force
+            this.vx = knockbackX * 0.5;
         }
         return true;
     }
@@ -79,3 +103,4 @@ export class Entity {
         return this.y <= 0;
     }
 }
+
