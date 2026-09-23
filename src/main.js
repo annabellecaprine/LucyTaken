@@ -58,6 +58,18 @@ class Game {
                 }
             });
         }
+
+        // Allow clicking canvas screen to focus and start game
+        this.canvas.addEventListener('click', () => {
+            window.focus();
+            audio.init();
+            if (this.gameState === 'TITLE') {
+                this.startNewGame();
+            } else if (this.gameState === 'VICTORY' || this.gameState === 'GAME_OVER') {
+                this.gameState = 'TITLE';
+                audio.startMusic('title');
+            }
+        });
     }
 
     init() {
@@ -177,6 +189,7 @@ class Game {
     loop = () => {
         this.update();
         this.render();
+        input.clearJustPressed(); // Clear single-frame input buffer after frame processing
         requestAnimationFrame(this.loop);
     };
 }
