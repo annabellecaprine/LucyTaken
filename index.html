@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LUCY HAS BEEN TAKEN! - NES Beat 'Em Up</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <div id="app">
+    <div class="arcade-cabinet">
+      <div class="arcade-header">
+        <div class="brand">NES 8-BIT CLASSIC SERIES</div>
+        <div class="title-strip">LUCY HAS BEEN TAKEN!</div>
+      </div>
+      
+      <div class="screen-wrapper">
+        <canvas id="game-canvas" width="256" height="240"></canvas>
+        <div id="crt-overlay" class="crt-overlay"></div>
+      </div>
+
+      <div class="arcade-controls">
+        <div class="btn-group">
+          <button id="btn-sound" class="arcade-btn">🔊 AUDIO: ON</button>
+          <button id="btn-crt" class="arcade-btn active">📺 CRT FILTER: ON</button>
+          <button id="btn-fullscreen" class="arcade-btn">⛶ FULLSCREEN</button>
+        </div>
+
+        <div class="controls-guide">
+          <div class="key-col">
+            <span class="label">MOVE / DEPTH:</span>
+            <span class="key">WASD</span> / <span class="key">ARROWS</span>
+          </div>
+          <div class="key-col">
+            <span class="label">PUNCH:</span> <span class="key">J</span> / <span class="key">Z</span>
+          </div>
+          <div class="key-col">
+            <span class="label">KICK / JUMP:</span> <span class="key">K</span> / <span class="key">X</span>
+          </div>
+          <div class="key-col">
+            <span class="label">SPECIAL TAIL SWIPE:</span> <span class="key">L</span> / <span class="key">C</span> / <span class="key">SPACE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
