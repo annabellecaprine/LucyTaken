@@ -151,7 +151,7 @@ export class StageManager {
         }
 
         // 5. Check Wave Clearance
-        if (this.isLocked && this.enemies.length === 0 && (!this.boss || this.boss.isDead)) {
+        if (this.isLocked && !this.isBossIntro && this.enemies.length === 0 && (!this.boss || this.boss.isDead)) {
             this.isLocked = false;
             this.waveIndex++;
             this.goPromptTimer = 120;

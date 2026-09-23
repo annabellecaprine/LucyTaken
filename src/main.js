@@ -251,8 +251,13 @@ class Game {
 
 // Bootstrap Game on Window Load
 window.addEventListener('DOMContentLoaded', () => {
-    if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(() => new Game());
+    // Explicitly force browser to load the font so canvas doesn't use massive fallbacks
+    if (document.fonts) {
+        document.fonts.load('10px "Press Start 2P"').then(() => {
+            new Game();
+        }).catch(() => {
+            new Game();
+        });
     } else {
         new Game();
     }
