@@ -1,5 +1,5 @@
-// Programmatic NES 8-Bit Pixel Art Generator
-// Creates crisp off-screen canvas sprite sheets for Red Panda, Lucy, Amanda, and Enemies.
+// High-Resolution 32x32 NES Pixel-Art Generator
+// Rendered programmatically with crisp shapes, shading, and limb detail.
 
 export class SpriteGenerator {
     static createCanvas(w, h) {
@@ -11,229 +11,344 @@ export class SpriteGenerator {
         return { canvas: c, ctx };
     }
 
-    // Draw pixel grid from ascii array
-    static drawPixelGrid(ctx, grid, palette, scale = 1, offsetX = 0, offsetY = 0) {
-        for (let r = 0; r < grid.length; r++) {
-            const row = grid[r];
-            for (let c = 0; c < row.length; c++) {
-                const char = row[c];
-                if (char !== '.' && palette[char]) {
-                    ctx.fillStyle = palette[char];
-                    ctx.fillRect(offsetX + c * scale, offsetY + r * scale, scale, scale);
-                }
-            }
-        }
-    }
-
-    // Generate Red Panda Hero Sprite Sheets
+    // Draw Red Panda Hero (32x32 per frame, 8 frames)
     static generateRedPandaSprites() {
-        const palette = {
-            R: '#d35400', // Rust orange/red fur
-            r: '#e67e22', // Light orange highlight
-            W: '#ffffff', // White face mask / ear tips
-            B: '#2c3e50', // Dark legs / paws / ears
-            K: '#111111', // Black outline & eyes
-            T: '#e67e22', // Tail light ring
-            D: '#7f8c8d', // Belt / detail
-            E: '#2ecc71', // Hero Green eyes
-        };
+        const frameW = 32;
+        const frameH = 32;
+        const count = 8;
+        const { canvas, ctx } = this.createCanvas(frameW * count, frameH);
 
-        // 16x24 base pixel grids for states
-        const idle1 = [
-            "..RRRRR..",
-            ".RWWWWWR.",
-            "RWKEEKEWR",
-            "RWKEEKEWR",
-            ".RWWWWWR.",
-            "..RBBB..",
-            ".RDRRRDR.",
-            ".RDRRRDR.",
-            "RRDRRRDRR",
-            ".RDRRRDR.",
-            "..B...B..",
-            "..B...B..",
-            ".BB...BB."
-        ];
+        for (let f = 0; f < count; f++) {
+            ctx.save();
+            ctx.translate(f * frameW, 0);
 
-        const idle2 = [
-            "..RRRRR..",
-            ".RWWWWWR.",
-            "RWKEEKEWR",
-            "RWKEEKEWR",
-            ".RWWWWWR.",
-            "..RBBB..",
-            ".RDRRRDR.",
-            ".RDRRRDR.",
-            ".RDRRRDR.",
-            "..RBBB..",
-            "..B...B..",
-            ".BB...BB.",
-            ".BB...BB."
-        ];
+            // Base colors
+            const rustRed = '#d35400';
+            const rustLight = '#e67e22';
+            const white = '#ffffff';
+            const darkFur = '#1e272e';
+            const yellowRing = '#f1c40f';
+            const greenEye = '#2ecc71';
 
-        const punch = [
-            "..RRRRR..",
-            ".RWWWWWR.",
-            "RWKEEKEWR",
-            ".RWWWWWR.",
-            "..RBBB...",
-            ".RDRRRBBB",
-            "RRDRRRBBB",
-            ".RDRRR...",
-            "..B...B..",
-            ".BB...BB."
-        ];
+            // 1. Ringed Tail (Behind Body)
+            ctx.save();
+            ctx.translate(6, 18);
+            if (f === 7) {
+                // Tail Swipe Spinning Whirlwind
+                ctx.strokeStyle = rustLight;
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(10, -2, 14, 0, Math.PI * 2);
+                ctx.stroke();
 
-        const kick = [
-            "..RRRRR..",
-            ".RWWWWWR.",
-            "RWKEEKEWR",
-            ".RWWWWWR.",
-            "..RBBB...",
-            ".RDRRR...",
-            "RRDRRRBBB",
-            ".RDRRR...",
-            "..B...BB.",
-            ".BB......"
-        ];
+                ctx.strokeStyle = yellowRing;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(10, -2, 10, 0, Math.PI * 2);
+                ctx.stroke();
+            } else {
+                // Normal Fluffy Ringed Tail
+                const tailOffset = (f === 1 || f === 3) ? 1 : 0;
+                ctx.fillStyle = rustRed;
+                ctx.fillRect(-4, -10 + tailOffset, 8, 14);
+                ctx.fillStyle = yellowRing;
+                ctx.fillRect(-4, -8 + tailOffset, 8, 3);
+                ctx.fillRect(-4, -3 + tailOffset, 8, 3);
+                ctx.fillStyle = darkFur;
+                ctx.fillRect(-4, 2 + tailOffset, 8, 2);
+            }
+            ctx.restore();
 
-        // Spinning Tail Swipe (Special frame showing giant fluffy ringed tail)
-        const tailSwipe = [
-            ".TTRRRTT.",
-            "TTRRRRRTT",
-            "TRWWWWWRT",
-            "RWKEEKEWR",
-            "RWWWWWWWR",
-            "RBBBBBBBR",
-            "RRRRRRRRR",
-            ".TTRRRTT.",
-            "..BB.BB.."
-        ];
+            // 2. Legs & Feet
+            const legOffset1 = (f === 2) ? -2 : (f === 3 ? 2 : 0);
+            const legOffset2 = (f === 2) ? 2 : (f === 3 ? -2 : 0);
 
-        const { canvas, ctx } = this.createCanvas(128, 48);
+            ctx.fillStyle = darkFur;
+            if (f === 6) {
+                // Kick Pose (Right leg extended forward)
+                ctx.fillRect(10, 22, 6, 4); // Left standing leg
+                ctx.fillRect(18, 18, 10, 5); // Extended Kick Leg
+                // Kick arc line
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(22, 20, 8, -Math.PI / 4, Math.PI / 4);
+                ctx.stroke();
+            } else {
+                ctx.fillRect(11 + legOffset1, 22, 4, 8); // Left leg
+                ctx.fillRect(17 + legOffset2, 22, 4, 8); // Right leg
+            }
 
-        // Frame 0: Idle 1
-        this.drawPixelGrid(ctx, idle1, palette, 1, 4, 8);
-        // Frame 1: Idle 2
-        this.drawPixelGrid(ctx, idle2, palette, 1, 28, 8);
-        // Frame 2: Punch
-        this.drawPixelGrid(ctx, punch, palette, 1, 52, 8);
-        // Frame 3: Kick
-        this.drawPixelGrid(ctx, kick, palette, 1, 76, 8);
-        // Frame 4: Tail Swipe
-        this.drawPixelGrid(ctx, tailSwipe, palette, 1, 100, 8);
+            // 3. Torso & Vest
+            ctx.fillStyle = rustRed;
+            ctx.fillRect(11, 14, 10, 9);
+            ctx.fillStyle = darkFur; // Vest
+            ctx.fillRect(11, 15, 3, 7);
+            ctx.fillRect(18, 15, 3, 7);
+
+            // 4. Arms & Gloves
+            ctx.fillStyle = darkFur;
+            if (f === 4) {
+                // Punch 1 (Extended right arm)
+                ctx.fillRect(10, 15, 4, 4);
+                ctx.fillStyle = rustRed;
+                ctx.fillRect(18, 14, 10, 5); // Extended Fist
+                // Punch wind arc
+                ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                ctx.fillRect(26, 13, 4, 7);
+            } else if (f === 5) {
+                // Uppercut Punch
+                ctx.fillStyle = rustRed;
+                ctx.fillRect(18, 8, 5, 10); // Uppercut fist going up
+                ctx.fillStyle = '#f1c40f';
+                ctx.fillRect(17, 4, 7, 4); // Yellow impact sparkle
+            } else {
+                ctx.fillRect(8, 16, 4, 6);
+                ctx.fillRect(20, 16, 4, 6);
+            }
+
+            // 5. Head & Face Features
+            ctx.fillStyle = rustRed;
+            ctx.fillRect(10, 4, 12, 10);
+
+            // Fluffy Ears
+            ctx.fillStyle = rustRed;
+            ctx.fillRect(8, 2, 4, 4);
+            ctx.fillRect(20, 2, 4, 4);
+            ctx.fillStyle = white; // Inner ear fluff
+            ctx.fillRect(9, 3, 2, 2);
+            ctx.fillRect(21, 3, 2, 2);
+
+            // White Cheek Markings & Snout (Red Panda Mask)
+            ctx.fillStyle = white;
+            ctx.fillRect(9, 9, 3, 4);  // Left cheek
+            ctx.fillRect(20, 9, 3, 4); // Right cheek
+            ctx.fillRect(14, 10, 4, 4); // Snout
+
+            // Black Nose
+            ctx.fillStyle = darkFur;
+            ctx.fillRect(15, 10, 2, 2);
+
+            // Hero Green Eyes
+            ctx.fillStyle = greenEye;
+            ctx.fillRect(12, 7, 2, 3);
+            ctx.fillRect(18, 7, 2, 3);
+
+            ctx.restore();
+        }
 
         return canvas;
     }
 
-    // Generate Amanda Boss Sprites (Black Cat in Stylish Waistcoat)
+    // Draw Amanda Boss (32x32 per frame, 3 frames)
     static generateAmandaSprites() {
-        const palette = {
-            K: '#181818', // Black fur
-            E: '#2ecc71', // Piercing green eyes
-            W: '#ffffff', // White shirt
-            V: '#2c3e50', // Dark waistcoat
-            G: '#f1c40f', // Gold brooch
-            R: '#e74c3c'  // Red sofa detail / lipstick
-        };
+        const frameW = 32;
+        const frameH = 32;
+        const count = 3;
+        const { canvas, ctx } = this.createCanvas(frameW * count, frameH);
 
-        const stance = [
-            ".K...K.",
-            "KK...KK",
-            "KKKKKKK",
-            "KKEKEKK",
-            "KKKKKKK",
-            ".WVVVW.",
-            ".WVVVW.",
-            ".WVGVW.",
-            ".WVVVW.",
-            "..K.K..",
-            "..K.K..",
-            ".KK.KK."
-        ];
+        for (let f = 0; f < count; f++) {
+            ctx.save();
+            ctx.translate(f * frameW, 0);
 
-        const slash = [
-            "..K...K.",
-            ".KK...KK",
-            "KKKKKKKK",
-            "KKKEKEKK",
-            ".WVVVKKK",
-            ".WVVVKKK",
-            ".WVGV...",
-            "..K.KK..",
-            ".KK..KK."
-        ];
+            const blackFur = '#181818';
+            const whiteShirt = '#ffffff';
+            const vestDark = '#2c3e50';
+            const greenEye = '#2ecc71';
+            const gold = '#f1c40f';
+            const redLip = '#e74c3c';
 
-        const { canvas, ctx } = this.createCanvas(64, 32);
-        this.drawPixelGrid(ctx, stance, palette, 1, 4, 4);
-        this.drawPixelGrid(ctx, slash, palette, 1, 36, 4);
+            // Tail
+            ctx.strokeStyle = blackFur;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(6, 20, 8, 0, Math.PI);
+            ctx.stroke();
+
+            // Legs
+            ctx.fillStyle = vestDark;
+            const walkShift = f === 1 ? 2 : 0;
+            ctx.fillRect(11 - walkShift, 22, 4, 9);
+            ctx.fillRect(17 + walkShift, 22, 4, 9);
+
+            // Body & Stylish Waistcoat
+            ctx.fillStyle = whiteShirt;
+            ctx.fillRect(11, 12, 10, 10);
+            ctx.fillStyle = vestDark;
+            ctx.fillRect(10, 13, 3, 8);
+            ctx.fillRect(19, 13, 3, 8);
+
+            // Gold Brooch
+            ctx.fillStyle = gold;
+            ctx.fillRect(15, 14, 2, 2);
+
+            // Arms & Slash FX
+            if (f === 2) {
+                // Dash Slash stance
+                ctx.fillStyle = blackFur;
+                ctx.fillRect(18, 14, 10, 4); // Extended arm
+                // Red Slash claw lines
+                ctx.strokeStyle = '#e74c3c';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(24, 10); ctx.lineTo(30, 22);
+                ctx.moveTo(27, 8); ctx.lineTo(31, 18);
+                ctx.stroke();
+            } else {
+                ctx.fillStyle = blackFur;
+                ctx.fillRect(8, 14, 3, 7);
+                ctx.fillRect(21, 14, 3, 7);
+            }
+
+            // Head & Ears
+            ctx.fillStyle = blackFur;
+            ctx.fillRect(10, 4, 12, 9);
+            // Ears
+            ctx.fillRect(9, 1, 3, 4);
+            ctx.fillRect(20, 1, 3, 4);
+            ctx.fillStyle = '#ff7675';
+            ctx.fillRect(10, 2, 1, 2);
+            ctx.fillRect(21, 2, 1, 2);
+
+            // Eyes
+            ctx.fillStyle = greenEye;
+            ctx.fillRect(12, 7, 3, 2);
+            ctx.fillRect(17, 7, 3, 2);
+
+            // Lipstick / mouth
+            ctx.fillStyle = redLip;
+            ctx.fillRect(15, 10, 2, 1);
+
+            ctx.restore();
+        }
 
         return canvas;
     }
 
-    // Generate Lucy Sprites (Blonde Catgirl in distress)
+    // Draw Lucy (32x32 per frame, 2 frames: Bound & Rescued)
     static generateLucySprites() {
-        const palette = {
-            O: '#e67e22', // Orange fur ears/tail
-            Y: '#f1c40f', // Blonde hair
-            E: '#3498db', // Blue eyes
-            P: '#ff7675', // Blushing pink
-            R: '#d63031', // Rope bound
-            H: '#2d3436'  // Dark hoodie
-        };
+        const frameW = 32;
+        const frameH = 32;
+        const { canvas, ctx } = this.createCanvas(frameW * 2, frameH);
 
-        const bound = [
-            ".O...O.",
-            "OYYYYYO",
-            "YYEEYYY",
-            "YYYYYYY",
-            ".RRHRR.",
-            ".RRRRR.",
-            ".RRHRR.",
-            "..HH..."
-        ];
+        // Frame 0: Bound Lucy
+        ctx.save();
+        ctx.translate(0, 0);
+        // Blonde Hair & Ears
+        ctx.fillStyle = '#f1c40f';
+        ctx.fillRect(10, 4, 12, 12);
+        ctx.fillStyle = '#e67e22'; // Orange ears
+        ctx.fillRect(8, 2, 4, 4);
+        ctx.fillRect(20, 2, 4, 4);
+        // Blue eyes & blushing cheeks
+        ctx.fillStyle = '#3498db';
+        ctx.fillRect(12, 8, 2, 2);
+        ctx.fillRect(18, 8, 2, 2);
+        ctx.fillStyle = '#ff7675';
+        ctx.fillRect(11, 10, 2, 1);
+        ctx.fillRect(19, 10, 2, 1);
+        // Dark Hoodie & Bound Ropes
+        ctx.fillStyle = '#34495e';
+        ctx.fillRect(11, 15, 10, 12);
+        ctx.fillStyle = '#e74c3c'; // Ropes
+        ctx.fillRect(9, 17, 14, 3);
+        ctx.fillRect(9, 22, 14, 3);
+        ctx.restore();
 
-        const rescued = [
-            ".O...O.",
-            "OYYYYYO",
-            "YYEEYYY",
-            "YYYYYYY",
-            ".YYYYY.",
-            "..HH...",
-            "..HH..."
-        ];
-
-        const { canvas, ctx } = this.createCanvas(64, 32);
-        this.drawPixelGrid(ctx, bound, palette, 1, 4, 8);
-        this.drawPixelGrid(ctx, rescued, palette, 1, 36, 8);
+        // Frame 1: Rescued Lucy
+        ctx.save();
+        ctx.translate(32, 0);
+        ctx.fillStyle = '#f1c40f';
+        ctx.fillRect(10, 4, 12, 14);
+        ctx.fillStyle = '#e67e22';
+        ctx.fillRect(8, 2, 4, 4);
+        ctx.fillRect(20, 2, 4, 4);
+        ctx.fillStyle = '#3498db';
+        ctx.fillRect(12, 8, 2, 2);
+        ctx.fillRect(18, 8, 2, 2);
+        // Smile
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillRect(14, 11, 4, 1);
+        // Clothes
+        ctx.fillStyle = '#34495e';
+        ctx.fillRect(11, 16, 10, 10);
+        // Waving arm
+        ctx.fillStyle = '#e67e22';
+        ctx.fillRect(21, 12, 4, 8);
+        ctx.restore();
 
         return canvas;
     }
 
-    // Generate Enemy Thugs (Alley Cats, Ninjas, Bulldogs)
+    // Draw Enemies (Alley Cat, Ninja Cat, Bouncer)
     static generateEnemySprites() {
-        const alleyCatPalette = {
-            C: '#7f8c8d', // Gray fur
-            R: '#e74c3c', // Red headband
-            E: '#f1c40f', // Yellow eyes
-            B: '#2c3e50', // Vest
-            W: '#ffffff'
-        };
+        const frameW = 32;
+        const frameH = 32;
+        const { canvas, ctx } = this.createCanvas(frameW * 3, frameH);
 
-        const alleyCat = [
-            ".C...C.",
-            "CRRRRRC",
-            "CCECECC",
-            "CCCCCCC",
-            ".BBB...",
-            "CBBBCCC",
-            ".BBB...",
-            "..C.C..",
-            ".CC.CC."
-        ];
+        // 1. Alley Cat Thug (Red Headband, Gray Fur, Red Gloves)
+        ctx.save();
+        ctx.translate(0, 0);
+        ctx.fillStyle = '#7f8c8d'; // Gray fur
+        ctx.fillRect(10, 4, 12, 10);
+        ctx.fillRect(9, 2, 3, 3);
+        ctx.fillRect(20, 2, 3, 3);
+        // Red Headband
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillRect(9, 5, 14, 3);
+        // Yellow eyes
+        ctx.fillStyle = '#f1c40f';
+        ctx.fillRect(12, 9, 2, 2);
+        ctx.fillRect(18, 9, 2, 2);
+        // Body & Red Gloves
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(11, 14, 10, 9);
+        ctx.fillRect(11, 22, 4, 8);
+        ctx.fillRect(17, 22, 4, 8);
+        ctx.fillStyle = '#e74c3c'; // Gloves
+        ctx.fillRect(7, 16, 4, 5);
+        ctx.fillRect(21, 16, 4, 5);
+        ctx.restore();
 
-        const { canvas, ctx } = this.createCanvas(64, 32);
-        this.drawPixelGrid(ctx, alleyCat, alleyCatPalette, 1, 4, 8);
+        // 2. Ninja Cat (Dark Purple Hood, Yellow Eyes)
+        ctx.save();
+        ctx.translate(32, 0);
+        ctx.fillStyle = '#2d132c'; // Dark Purple Hood
+        ctx.fillRect(10, 3, 12, 11);
+        ctx.fillRect(9, 1, 3, 3);
+        ctx.fillRect(20, 1, 3, 3);
+        // Yellow Eyes
+        ctx.fillStyle = '#f1c40f';
+        ctx.fillRect(12, 7, 3, 2);
+        ctx.fillRect(17, 7, 3, 2);
+        // Suit & Claws
+        ctx.fillStyle = '#1c1033';
+        ctx.fillRect(11, 14, 10, 9);
+        ctx.fillRect(11, 22, 4, 8);
+        ctx.fillRect(17, 22, 4, 8);
+        ctx.fillStyle = '#bdc3c7'; // Claws
+        ctx.fillRect(6, 15, 5, 3);
+        ctx.fillRect(21, 15, 5, 3);
+        ctx.restore();
+
+        // 3. Bulldog Bouncer (Bulky, Spiked Collar)
+        ctx.save();
+        ctx.translate(64, 0);
+        ctx.fillStyle = '#a0522d'; // Brown fur
+        ctx.fillRect(8, 2, 16, 12);
+        // Spiked Collar
+        ctx.fillStyle = '#7f8c8d';
+        ctx.fillRect(7, 13, 18, 3);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(9, 14, 2, 2);
+        ctx.fillRect(15, 14, 2, 2);
+        ctx.fillRect(21, 14, 2, 2);
+        // Bulky Body
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(9, 16, 14, 10);
+        ctx.fillRect(9, 25, 6, 6);
+        ctx.fillRect(17, 25, 6, 6);
+        ctx.restore();
 
         return canvas;
     }

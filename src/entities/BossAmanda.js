@@ -9,14 +9,13 @@ export class BossAmanda extends Entity {
         this.name = 'AMANDA (SYNDICATE BOSS)';
         this.hp = 350;
         this.maxHp = 350;
-        this.width = 18;
-        this.height = 26;
+        this.width = 24;
+        this.height = 32;
 
-        this.speedX = 1.9;
-        this.speedZ = 1.4;
+        this.speedX = 2.0;
+        this.speedZ = 1.5;
 
         this.phase = 1;
-        this.dashTimer = 0;
         this.attackCooldown = 0;
 
         this.spriteCanvas = SpriteGenerator.generateAmandaSprites();
@@ -30,11 +29,10 @@ export class BossAmanda extends Entity {
 
         if (this.attackCooldown > 0) this.attackCooldown--;
 
-        // Phase shift at 50% HP
         if (this.phase === 1 && this.hp < this.maxHp / 2) {
             this.phase = 2;
-            this.speedX = 2.4;
-            this.speedZ = 1.8;
+            this.speedX = 2.6;
+            this.speedZ = 1.9;
             audio.playBossAlert();
             if (renderer) renderer.addHitSpark(this.x, this.z - 30, 'PHASE 2 ENRAGED!');
             if (stageManager) stageManager.spawnMinionsForBoss();
@@ -57,7 +55,6 @@ export class BossAmanda extends Entity {
             return;
         }
 
-        // Alignment & Combat logic
         if (Math.abs(dz) > 6) {
             this.vz = (dz > 0 ? 1 : -1) * this.speedZ;
         }
@@ -78,18 +75,18 @@ export class BossAmanda extends Entity {
         this.state = 'DASH_SLASH';
         this.stateTimer = 0;
         this.attackCooldown = 40;
-        this.vx = this.facingRight ? 5 : -5; // Fast dash
+        this.vx = this.facingRight ? 5.5 : -5.5;
         audio.playKick();
 
         this.activeHitbox = {
-            ...Collision.createHitbox(this, 12, -22, 0, 26, 22, 14),
+            ...Collision.createHitbox(this, 14, -28, 0, 30, 26, 16),
             damage: 18,
-            knockbackX: this.facingRight ? 5 : -5,
+            knockbackX: this.facingRight ? 6 : -6,
             knockbackZ: 0
         };
 
         if (player && Collision.check3DBox(this.activeHitbox, Collision.getHurtbox(player))) {
-            player.takeDamage(18, this.facingRight ? 5 : -5, 0);
+            player.takeDamage(18, this.facingRight ? 6 : -6, 0);
             audio.playHit();
             if (renderer) {
                 renderer.triggerShake(5, 8);
@@ -105,14 +102,14 @@ export class BossAmanda extends Entity {
         audio.playPunch();
 
         this.activeHitbox = {
-            ...Collision.createHitbox(this, 10, -20, 0, 20, 20, 10),
+            ...Collision.createHitbox(this, 12, -26, 0, 24, 24, 12),
             damage: 14,
-            knockbackX: this.facingRight ? 3 : -3,
+            knockbackX: this.facingRight ? 4 : -4,
             knockbackZ: 0
         };
 
         if (player && Collision.check3DBox(this.activeHitbox, Collision.getHurtbox(player))) {
-            player.takeDamage(14, this.facingRight ? 3 : -3, 0);
+            player.takeDamage(14, this.facingRight ? 4 : -4, 0);
             audio.playHit();
             if (renderer) renderer.addHitSpark(player.x, player.z - player.y - 20, 'WHACK!');
         }
@@ -121,12 +118,24 @@ export class BossAmanda extends Entity {
     draw(ctx) {
         if (this.isDead) return;
 
-        // Ground Shadow
+        // Shadow
         ctx.save();
-        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
         ctx.beginPath();
-        ctx.ellipse(this.x, this.z, 10, 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x, this.z, 12, 5, 0, 0, Math.PI * 2);
         ctx.fill();
+
+        // Dash Attack Red Range Indicator
+        if (this.state === 'DASH_SLASH') {
+            ctx.fillStyle = 'rgba(231, 76, 60, 0.3)';
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 1;
+            const dir = this.facingRight ? 1 : -1;
+            ctx.beginPath();
+            ctx.ellipse(this.x + dir * 16, this.z, 18, 9, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        }
         ctx.restore();
 
         // Sprite
@@ -139,8 +148,8 @@ export class BossAmanda extends Entity {
             ctx.globalAlpha = 0.5;
         }
 
-        const frame = this.state === 'DASH_SLASH' ? 1 : 0;
-        ctx.drawImage(this.spriteCanvas, frame * 32, 0, 32, 32, -16, -28, 32, 32);
+        const frame = this.state === 'DASH_SLASH' ? 2 : (this.state === 'WALK' ? 1 : 0);
+        ctx.drawImage(this.spriteCanvas, frame * 32, 0, 32, 32, -16, -32, 32, 32);
 
         ctx.restore();
     }

@@ -6,8 +6,11 @@ import { Collision } from '../engine/Collision.js';
 export class Player extends Entity {
     constructor(x, y, z) {
         super(x, y, z);
-        this.speedX = 2.2;
-        this.speedZ = 1.4;
+        this.width = 24;
+        this.height = 32;
+
+        this.speedX = 2.4;
+        this.speedZ = 1.5;
 
         this.comboStep = 0;
         this.comboTimer = 0;
@@ -15,10 +18,8 @@ export class Player extends Entity {
         this.lives = 3;
         this.score = 0;
 
-        // Generate sprites
+        // Generate high-res 32x32 sprites
         this.spriteCanvas = SpriteGenerator.generateRedPandaSprites();
-
-        // Active attack hitbox reference
         this.activeHitbox = null;
     }
 
@@ -30,13 +31,12 @@ export class Player extends Entity {
         const dx = input.moveX();
         const dz = input.moveZ();
 
-        // Facing direction
         if (dx > 0) this.facingRight = true;
         if (dx < 0) this.facingRight = false;
 
-        // Jumping
+        // Jump
         if (this.isOnGround() && input.isKickPressed() && (this.state === 'IDLE' || this.state === 'WALK')) {
-            this.vy = 5.5;
+            this.vy = 6.0;
             this.state = 'JUMP';
             this.stateTimer = 0;
             audio.playKick();
@@ -59,7 +59,7 @@ export class Player extends Entity {
             return;
         }
 
-        // Movement if not attacking
+        // Movement
         if (this.state === 'IDLE' || this.state === 'WALK') {
             if (dx !== 0 || dz !== 0) {
                 this.vx = dx * this.speedX;
@@ -75,16 +75,16 @@ export class Player extends Entity {
         this.state = 'PUNCH';
         this.stateTimer = 0;
         this.comboStep = (this.comboStep % 3) + 1;
-        this.vx = this.facingRight ? 1.5 : -1.5; // Slight forward lunge
+        this.vx = this.facingRight ? 2.0 : -2.0;
 
         audio.playPunch();
 
-        const range = this.comboStep === 3 ? 24 : 18;
-        const damage = this.comboStep === 3 ? 25 : 12;
-        const knockback = this.comboStep === 3 ? (this.facingRight ? 5 : -5) : (this.facingRight ? 2 : -2);
+        const range = this.comboStep === 3 ? 32 : 24;
+        const damage = this.comboStep === 3 ? 30 : 15;
+        const knockback = this.comboStep === 3 ? (this.facingRight ? 6 : -6) : (this.facingRight ? 3 : -3);
 
         this.activeHitbox = {
-            ...Collision.createHitbox(this, 10, -20, 0, range, 20, 10),
+            ...Collision.createHitbox(this, 12, -26, 0, range, 26, 12),
             damage: damage,
             knockbackX: knockback,
             knockbackZ: 0
@@ -97,9 +97,9 @@ export class Player extends Entity {
         audio.playKick();
 
         this.activeHitbox = {
-            ...Collision.createHitbox(this, 12, -22, 0, 22, 20, 12),
-            damage: 20,
-            knockbackX: this.facingRight ? 4 : -4,
+            ...Collision.createHitbox(this, 14, -28, 0, 28, 26, 14),
+            damage: 25,
+            knockbackX: this.facingRight ? 5 : -5,
             knockbackZ: 0
         };
     }
@@ -111,15 +111,15 @@ export class Player extends Entity {
 
         // 360 degree surrounding hitbox!
         this.activeHitbox = {
-            x: this.x - 24,
-            y: this.y - 20,
+            x: this.x - 30,
+            y: this.y - 28,
             z: this.z,
-            width: 48,
-            height: 24,
-            zDepth: 20,
+            width: 60,
+            height: 30,
+            zDepth: 24,
             owner: this,
-            damage: 35,
-            knockbackX: this.facingRight ? 6 : -6,
+            damage: 40,
+            knockbackX: this.facingRight ? 8 : -8,
             knockbackZ: 0,
             isSpecial: true
         };
@@ -128,7 +128,6 @@ export class Player extends Entity {
     update(bounds, enemies, renderer) {
         this.updatePhysics(bounds);
 
-        // Reset state after attack animations complete
         if (this.state === 'PUNCH' && this.stateTimer > 12) {
             this.state = 'IDLE';
             this.activeHitbox = null;
@@ -136,8 +135,8 @@ export class Player extends Entity {
             this.state = 'IDLE';
             this.activeHitbox = null;
         } else if (this.state === 'TAIL_SWIPE') {
-            if (this.stateTimer === 8 && renderer) {
-                renderer.triggerShake(4, 6);
+            if (this.stateTimer === 6 && renderer) {
+                renderer.triggerShake(5, 8);
             }
             if (this.stateTimer > 20) {
                 this.state = 'IDLE';
@@ -147,7 +146,7 @@ export class Player extends Entity {
             this.state = 'IDLE';
         }
 
-        // Check attack collisions against enemies
+        // Hitbox collisions
         if (this.activeHitbox && enemies) {
             for (const enemy of enemies) {
                 if (!enemy.isDead && Collision.check3DBox(this.activeHitbox, Collision.getHurtbox(enemy))) {
@@ -169,15 +168,32 @@ export class Player extends Entity {
     }
 
     draw(ctx) {
-        // 1. Shadow on the ground baseline (Z plane)
+        // 1. Ground Shadow (Z baseline)
         ctx.save();
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
         ctx.beginPath();
-        ctx.ellipse(this.x, this.z, 10, 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x, this.z, 12, 5, 0, 0, Math.PI * 2);
         ctx.fill();
+
+        // 2. Visible Attack Hit Range Indicator (when attacking)
+        if (this.activeHitbox) {
+            ctx.fillStyle = this.activeHitbox.isSpecial ? 'rgba(241, 196, 15, 0.25)' : 'rgba(231, 76, 60, 0.25)';
+            ctx.strokeStyle = this.activeHitbox.isSpecial ? '#f1c40f' : '#e74c3c';
+            ctx.lineWidth = 1;
+
+            ctx.beginPath();
+            if (this.activeHitbox.isSpecial) {
+                ctx.ellipse(this.x, this.z, 28, 12, 0, 0, Math.PI * 2);
+            } else {
+                const dir = this.facingRight ? 1 : -1;
+                ctx.ellipse(this.x + dir * 14, this.z, 16, 8, 0, 0, Math.PI * 2);
+            }
+            ctx.fill();
+            ctx.stroke();
+        }
         ctx.restore();
 
-        // 2. Draw Sprite
+        // 3. Draw Sprite
         ctx.save();
         ctx.translate(this.x, this.z - this.y);
 
@@ -185,28 +201,28 @@ export class Player extends Entity {
             ctx.scale(-1, 1);
         }
 
-        // Flashing when invincible
-        if (this.isInvincible && Math.floor(Date.now() / 50) % 2 === 0) {
+        if (this.isInvincible && Math.floor(Date.now() / 40) % 2 === 0) {
             ctx.globalAlpha = 0.5;
         }
 
-        // Frame selection
+        // Select sprite frame index
         let frameIndex = 0;
         if (this.state === 'WALK') {
-            frameIndex = Math.floor((this.stateTimer / 6) % 2);
+            frameIndex = 2 + Math.floor((this.stateTimer / 6) % 2);
         } else if (this.state === 'PUNCH') {
-            frameIndex = 2;
+            frameIndex = this.comboStep === 2 ? 5 : 4;
         } else if (this.state === 'JUMP' || this.state === 'JUMP_ATTACK') {
-            frameIndex = 3;
+            frameIndex = 6;
         } else if (this.state === 'TAIL_SWIPE') {
-            frameIndex = 4;
+            frameIndex = 7;
+        } else if (this.state === 'IDLE') {
+            frameIndex = Math.floor((Date.now() / 400) % 2);
         }
 
-        // Draw sprite slice from off-screen sprite sheet (24x24 per frame)
         ctx.drawImage(
             this.spriteCanvas,
-            frameIndex * 24, 0, 24, 24,
-            -12, -24, 24, 24
+            frameIndex * 32, 0, 32, 32,
+            -16, -32, 32, 32
         );
 
         ctx.restore();
