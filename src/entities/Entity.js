@@ -58,11 +58,19 @@ export class Entity {
             this.vz *= 0.6;
         }
 
-        // Death removal delay after lying on the ground for 60 frames
-        if (this.state === 'KNOCKDOWN' && this.hp <= 0 && this.isOnGround() && Math.abs(this.vy) < 1) {
-            if (this.stateTimer > 60) {
-                this.isDead = true;
-                this.state = 'DEAD';
+        // Get up (or die) after lying on the ground for 60 frames
+        if (this.state === 'KNOCKDOWN' && this.isOnGround() && Math.abs(this.vy) < 1) {
+            if (this.hp <= 0) {
+                if (this.stateTimer > 60) {
+                    this.isDead = true;
+                    this.state = 'DEAD';
+                }
+            } else {
+                if (this.stateTimer > 60) {
+                    this.state = 'IDLE';
+                    this.stateTimer = 0;
+                    this.invincibleTimer = 30; // Invincible while getting up
+                }
             }
         }
 

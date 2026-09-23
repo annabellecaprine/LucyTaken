@@ -131,6 +131,18 @@ export class Enemy extends Entity {
         ctx.save();
         ctx.translate(this.x, this.z - this.y);
 
+        // Floating HP Bar (drawn upright before rotation)
+        if (this.hp < this.maxHp) {
+            const hpPercent = Math.max(0, this.hp / this.maxHp);
+            ctx.fillStyle = '#111111';
+            ctx.fillRect(-8, -38, 16, 2);
+            ctx.fillStyle = hpPercent > 0.5 ? '#2ecc71' : '#e74c3c';
+            ctx.fillRect(-8, -38, Math.floor(16 * hpPercent), 2);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-9, -39, 18, 4);
+        }
+
         if (!this.facingRight) ctx.scale(-1, 1);
 
         if (this.state === 'KNOCKDOWN' || this.state === 'DEAD') {
@@ -147,17 +159,6 @@ export class Enemy extends Entity {
             this.spriteFrame * 32, 0, 32, 32,
             -16, -32, 32, 32
         );
-        // Floating HP Bar
-        if (this.hp < this.maxHp) {
-            const hpPercent = Math.max(0, this.hp / this.maxHp);
-            ctx.fillStyle = '#111111';
-            ctx.fillRect(-8, -38, 16, 2);
-            ctx.fillStyle = hpPercent > 0.5 ? '#2ecc71' : '#e74c3c';
-            ctx.fillRect(-8, -38, Math.floor(16 * hpPercent), 2);
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(-9, -39, 18, 4);
-        }
 
         ctx.restore();
     }
