@@ -96,6 +96,9 @@ export class Entity {
             // Stash hit-stun recoiling force
             this.vx = knockbackX * 0.5;
         }
+
+        // Clear any active attacks
+        this.activeHitbox = null;
         return true;
     }
 

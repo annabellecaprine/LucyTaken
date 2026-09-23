@@ -23,7 +23,7 @@ export class BossAmanda extends Entity {
     }
 
     updateAI(player, bounds, renderer, stageManager) {
-        if (this.isDead || !player) return;
+        if (this.isDead || !player || player.isDead || this.state === 'KNOCKDOWN') return;
 
         this.updatePhysics(bounds);
 
