@@ -39,9 +39,11 @@ export class Enemy extends Entity {
     }
 
     updateAI(player, bounds, renderer) {
-        if (this.isDead || !player || player.isDead || this.state === 'KNOCKDOWN') return;
+        if (this.isDead || !player || player.isDead) return;
 
         this.updatePhysics(bounds);
+
+        if (this.state === 'KNOCKDOWN') return;
 
         if (this.attackCooldown > 0) this.attackCooldown--;
 

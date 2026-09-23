@@ -251,5 +251,9 @@ class Game {
 
 // Bootstrap Game on Window Load
 window.addEventListener('DOMContentLoaded', () => {
-    new Game();
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => new Game());
+    } else {
+        new Game();
+    }
 });
