@@ -62,7 +62,6 @@ export class Renderer {
             spark.life--;
             spark.y += spark.vy;
 
-            // Flash color between white and yellow
             this.ctx.fillStyle = spark.life % 2 === 0 ? '#ffffff' : '#f1c40f';
             this.ctx.fillText(spark.text, Math.floor(spark.x), Math.floor(spark.y));
 
@@ -77,24 +76,24 @@ export class Renderer {
     renderEntities(entities, cameraX) {
         this.applyCameraTransform(cameraX);
 
-        // Sort by Z (world depth baseline)
-        const sorted = [...entities].sort((a, b) => a.z - b.z);
+        const validEntities = entities.filter(e => e && typeof e.z === 'number');
+        const sorted = [...validEntities].sort((a, b) => a.z - b.z);
 
         for (const entity of sorted) {
-            entity.draw(this.ctx);
+            if (typeof entity.draw === 'function') {
+                entity.draw(this.ctx);
+            }
         }
 
         this.restoreTransform();
         this.updateAndRenderHitSparks(cameraX);
     }
 
-    // Draw 8-bit NES style pixel text
     drawText(text, x, y, color = '#ffffff', align = 'left', size = 8) {
         this.ctx.save();
         this.ctx.font = `${size}px "Press Start 2P", monospace`;
         this.ctx.textAlign = align;
 
-        // Draw black text shadow for 8-bit contrast
         this.ctx.fillStyle = '#000000';
         this.ctx.fillText(text, Math.floor(x) + 1, Math.floor(y) + 1);
 

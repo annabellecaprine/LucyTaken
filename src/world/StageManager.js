@@ -68,7 +68,17 @@ export class StageManager {
             x, z,
             type: 'fish',
             healAmount: 35,
-            life: 300
+            life: 300,
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.z);
+                // Draw blue fish pixel art
+                ctx.fillStyle = '#3498db';
+                ctx.fillRect(-6, -4, 12, 6);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(-2, -2, 4, 2);
+                ctx.restore();
+            }
         });
     }
 
@@ -170,17 +180,6 @@ export class StageManager {
             ctx.fillStyle = '#f1c40f';
             ctx.textAlign = 'right';
             ctx.fillText('GO ▶▶', 240, 50);
-            ctx.restore();
-        }
-
-        // Draw Fish Item Pickups
-        for (const item of this.items) {
-            ctx.save();
-            ctx.translate(item.x - this.cameraX, item.z);
-            ctx.fillStyle = '#3498db';
-            ctx.fillRect(-6, -4, 12, 6);
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(-2, -2, 4, 2);
             ctx.restore();
         }
     }
